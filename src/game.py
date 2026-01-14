@@ -1,8 +1,7 @@
 """Lógica principal del juego Pong Clone usando turtle.
 
-De momento solo crea la ventana y el bucle principal.
+De momento solo crea la ventana, las palas y el bucle principal.
 Más adelante añadiremos:
-- Palas (jugador 1 y jugador 2 / IA).
 - Pelota con movimiento.
 - Sistema de puntuación.
 - Controles de teclado.
@@ -17,7 +16,8 @@ WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Pong Clone"
 
 
-def setup_screen() -> turtle.Screen:
+# Creamos la ventana del juego
+def setup_screen():
     """Configura la ventana principal del juego y la devuelve."""
     screen = turtle.Screen()
     screen.title(WINDOW_TITLE)
@@ -31,6 +31,7 @@ def setup_screen() -> turtle.Screen:
     return screen
 
 
+# Creamos el bucle principal del juego
 def run_game() -> None:
     """Función principal del juego.
 
@@ -40,7 +41,13 @@ def run_game() -> None:
     - Manejo de entradas del teclado.
     - Actualización de posiciones y detección de colisiones.
     """
+
+    # Inicializamos la pantalla
     screen = setup_screen()
+
+    # Inicializamos las palas
+    left_paddle = create_paddel(x_position=-350)
+    right_paddle = create_paddel(x_position=350)
 
     # Bucle principal del juego
     running = True
@@ -61,3 +68,20 @@ def run_game() -> None:
 
     # Esperamos a que el usuario cierre la ventana (por si salimos del bucle)
     screen.mainloop()
+
+
+# Creación de palas
+def create_paddel(x_position: int) -> turtle.Turtle:
+    """Crea una pala en la posición x indicada, centrada en y=0."""
+    paddle = turtle.Turtle()
+    paddle.speed(0)  # velocidad de animación (0 = lo más rápido)
+    paddle.shape("square")
+    paddle.color("white")
+    # Por defecto, la forma "square" es 20x20 píxeles.
+    # stretch_wid = alto, stretch_len = ancho (en múltiplos de 20).
+    paddle.shapesize(stretch_wid=5, stretch_len=1)  # pala vertical, más alta que ancha
+
+    paddle.penup()  # que no dibuje líneas al moverse
+    paddle.goto(x_position, 0)  # colocamos la pala
+
+    return paddle
