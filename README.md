@@ -1,25 +1,24 @@
-# Pong Clone
+# :video_game: Pong Clone
 
 Proyecto sencillo de clon de Pong escrito en Python usando el módulo `turtle`.
 
-## Objetivo
+ ## :dart: Objetivo
 
-- Servir como proyecto de aprendizaje y de portfolio.
-- Implementar:
-  - Modo dos jugadores.
-  - Modo jugador vs IA.
-  - Sistema de puntuación.
-- A futuro:
-  - Sonidos.
-  - Dificultad incremental.
+- A implementar: 
+  - Modo dos jugadores. :vs:
+  - Modo jugador vs IA. :robot:
+  - Sistema de puntuación. :trophy:
+- A futuro: 
+  - Sonidos. :musical_note: 
+  - Dificultad incremental. :1st_place_medal:
 
-## Requisitos
+## :wrench: Requisitos
 
 - Python 3.11
 - Conda o Miniconda (recomendado)
 - Entorno `pong_env` con las dependencias instaladas.
 
-## Puesta en marcha
+## :checkered_flag: Puesta en marcha
 
 ```bash
 conda create -n pong_env python=3.11
@@ -27,7 +26,7 @@ conda activate pong_env
 pip install black ruff mypy
 ````
 
-## Herramientas de desarrollo
+## :hammer_and_wrench: Herramientas de desarrollo
 
 - Formateo: `black`
 - Linting: `ruff`
