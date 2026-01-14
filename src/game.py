@@ -1,12 +1,16 @@
 """Lógica principal del juego Pong Clone usando turtle.
 
-De momento solo crea la ventana, las palas y el bucle principal.
+De momento:
+ - Creamos la ventana
+ - Creamos las palas 
+ - Controles de teclado.
+ - Creamos el bucle principal.
 Más adelante añadiremos:
 - Pelota con movimiento.
 - Sistema de puntuación.
-- Controles de teclado.
 """
 
+from tkinter import TclError
 import turtle
 
 
@@ -27,6 +31,15 @@ PADDLE_MOVE_DISTANCE = 20  # píxeles que se mueve la pala por pulsación
 ## Límites verticales para que las palas no se salgan de la pantalla
 TOP_LIMIT = (WINDOW_HEIGHT / 2) - (PADDLE_HEIGHT / 2)
 BOTTOM_LIMIT = -TOP_LIMIT
+
+# Tamaño y velocidad de la pelota
+BALL_SIZE = 1  # tamaño base de la forma "square"
+BALL_SPEED_X = 0.5
+BALL_SPEED_Y = 0.5
+
+BALL_TOP_LIMIT = (WINDOW_HEIGHT / 2) - (BALL_SIZE / 2)
+BALL_BOTTOM_LIMIT = -BALL_TOP_LIMIT
+
 
 
 # Creamos la ventana del juego
@@ -66,6 +79,13 @@ def run_game() -> None:
     ## Pala derecha a la derecha de la pantalla (x positiva)
     right_paddle = create_paddel(x_position=350)
 
+    # Inicializamos la pelota
+    ball = create_ball()
+
+    #Velocidades iniciales de la pelota
+    ball_dx = BALL_SPEED_X
+    ball_dy = BALL_SPEED_Y
+
     # -------- Eventos de teclado --------
     # Para poder detectar teclas
     screen.listen()
@@ -97,25 +117,46 @@ def run_game() -> None:
     running = True
 
     while running:
-        # Actualizamos la pantalla manualmente
         try:
+            # Actualizamos la pantalla manualmente
             screen.update()
 
-        # TODO: aquí actualizaremos la lógica del juego:
-        # - mover la pelota
-        # - detectar colisiones
-        # - actualizar puntuación
-        # - etc.
+            # LÓGICA DE LA PELOTA
+            ## Mover la pelota según su velocidad
+            ball.setx(ball.xcor() + ball_dx)
+            ball.sety(ball.ycor() + ball_dy)
 
-        # Para no consumir 100% CPU, podemos hacer una pequeña pausa
-        # (opcional, turtle a veces ya limita el frame rate).
-        # turtle.time.sleep(0.01)  # si quisieras limitar aún más
+            ## Rebote en el borde superior
+            if ball.ycor() > BALL_TOP_LIMIT:
+                ball.sety(BALL_TOP_LIMIT)
+                ball_dy *= -1  # invertimos la dirección vertical
 
-        # Esperamos a que el usuario cierre la ventana (por si salimos del bucle)
-        # screen.mainloop()
-        except turtle.Terminator:
+            ## Rebote en el borde inferior
+            if ball.ycor() < BALL_BOTTOM_LIMIT:
+                ball.sety(BALL_BOTTOM_LIMIT)
+                ball_dy *= -1  # invertimos la dirección vertical
+
+            # TODO: aquí actualizaremos la lógica del juego:
+            # - detectar colisiones
+            # - actualizar puntuación
+            # - reset de la pelota
+            # - etc.
+
+            # Para no consumir 100% CPU, podemos hacer una pequeña pausa
+            # (opcional, turtle a veces ya limita el frame rate).
+            # turtle.time.sleep(0.01)  # si quisieras limitar aún más
+
+            # Esperamos a que el usuario cierre la ventana (por si salimos del bucle)
+            # screen.mainloop()
+        except (turtle.Terminator, turtle.TurtleGraphicsError, TclError):
             # La ventana se ha cerrado, salimos del bucle
             running = False    
+            break
+        except Exception as e:
+            print(f"Error inesperado en el bucle del juego: {e}")
+            running = False
+            break
+
 
 # Creación de palas
 def create_paddel(x_position: int) -> turtle.Turtle:
@@ -149,3 +190,18 @@ def move_paddle_down(paddle: turtle.Turtle) -> None:
     if new_y < BOTTOM_LIMIT:
         new_y = BOTTOM_LIMIT
     paddle.sety(new_y)
+
+
+# Creamos la pelota
+def create_ball() -> turtle.Turtle:
+    """Crea la pelota en el centro de la pantalla."""
+    ball = turtle.Turtle()
+    ball.speed(0)
+    ball.shape("square")
+    ball.color("white")
+    ball.shapesize(stretch_wid=BALL_SIZE, stretch_len=BALL_SIZE)  # tamaño normal
+    ball.penup()
+    ball.goto(0, 0)
+    return ball
+
+
