@@ -11,9 +11,22 @@ import turtle
 
 
 # Constantes de configuración de la ventana
+## Tamaño de la ventana
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Pong Clone"
+
+## Tamaño de la pala (en "múltiplos" de 20 px que usa turtle)
+PADDLE_STRETCH_WID = 5  # alto
+PADDLE_STRETCH_LEN = 1  # ancho
+
+## La forma "square" de turtle mide 20x20 píxeles.
+PADDLE_HEIGHT = 20 * PADDLE_STRETCH_WID
+PADDLE_MOVE_DISTANCE = 20  # píxeles que se mueve la pala por pulsación
+
+## Límites verticales para que las palas no se salgan de la pantalla
+TOP_LIMIT = (WINDOW_HEIGHT / 2) - (PADDLE_HEIGHT / 2)
+BOTTOM_LIMIT = -TOP_LIMIT
 
 
 # Creamos la ventana del juego
@@ -36,9 +49,11 @@ def run_game() -> None:
     """Función principal del juego.
 
     Aquí creamos la pantalla y ejecutamos el bucle principal.
-    Más adelante iremos añadiendo:
-    - Creación de palas y pelota.
+    Añadido:
+    - Creación y movimiento de palas.
     - Manejo de entradas del teclado.
+    Más adelante iremos añadiendo:
+    - Creación y movimiento de la pelota.
     - Actualización de posiciones y detección de colisiones.
     """
 
@@ -46,15 +61,45 @@ def run_game() -> None:
     screen = setup_screen()
 
     # Inicializamos las palas
+    ## Pala izquierda a la izquierda de la pantalla (x negativa)
     left_paddle = create_paddel(x_position=-350)
+    ## Pala derecha a la derecha de la pantalla (x positiva)
     right_paddle = create_paddel(x_position=350)
+
+    # -------- Eventos de teclado --------
+    # Para poder detectar teclas
+    screen.listen()
+
+    # Creamos funciones "wrapper" sin argumentos
+    # porque onkeypress espera funciones sin parámetros.
+    def left_paddle_up() -> None:
+        move_paddle_up(left_paddle)
+
+    def left_paddle_down() -> None:
+        move_paddle_down(left_paddle)
+
+    def right_paddle_up() -> None:
+        move_paddle_up(right_paddle)
+
+    def right_paddle_down() -> None:
+        move_paddle_down(right_paddle)
+
+    # Asignamos teclas:
+    # - W / S para la pala izquierda
+    screen.onkeypress(left_paddle_up, "w")
+    screen.onkeypress(left_paddle_down, "s")
+
+    # - Flechas ↑ / ↓ para la pala derecha
+    screen.onkeypress(right_paddle_up, "Up")
+    screen.onkeypress(right_paddle_down, "Down")
 
     # Bucle principal del juego
     running = True
 
     while running:
         # Actualizamos la pantalla manualmente
-        screen.update()
+        try:
+            screen.update()
 
         # TODO: aquí actualizaremos la lógica del juego:
         # - mover la pelota
@@ -66,9 +111,11 @@ def run_game() -> None:
         # (opcional, turtle a veces ya limita el frame rate).
         # turtle.time.sleep(0.01)  # si quisieras limitar aún más
 
-    # Esperamos a que el usuario cierre la ventana (por si salimos del bucle)
-    screen.mainloop()
-
+        # Esperamos a que el usuario cierre la ventana (por si salimos del bucle)
+        # screen.mainloop()
+        except turtle.Terminator:
+            # La ventana se ha cerrado, salimos del bucle
+            running = False    
 
 # Creación de palas
 def create_paddel(x_position: int) -> turtle.Turtle:
@@ -77,11 +124,28 @@ def create_paddel(x_position: int) -> turtle.Turtle:
     paddle.speed(0)  # velocidad de animación (0 = lo más rápido)
     paddle.shape("square")
     paddle.color("white")
-    # Por defecto, la forma "square" es 20x20 píxeles.
-    # stretch_wid = alto, stretch_len = ancho (en múltiplos de 20).
-    paddle.shapesize(stretch_wid=5, stretch_len=1)  # pala vertical, más alta que ancha
+    # Definimos el tamaño de la pala
+    paddle.shapesize(
+        stretch_wid=PADDLE_STRETCH_WID, stretch_len=PADDLE_STRETCH_LEN
+    )  # pala vertical, más alta que ancha
 
     paddle.penup()  # que no dibuje líneas al moverse
     paddle.goto(x_position, 0)  # colocamos la pala
 
     return paddle
+
+
+# Movimientos de las palas
+def move_paddle_up(paddle: turtle.Turtle) -> None:
+    """Mueve una pala hacia arriba, respetando los límites de la ventana."""
+    new_y = paddle.ycor() + PADDLE_MOVE_DISTANCE
+    if new_y > TOP_LIMIT:
+        new_y = TOP_LIMIT
+    paddle.sety(new_y)
+
+def move_paddle_down(paddle: turtle.Turtle) -> None:
+    """Mueve una pala hacia abajo, respetando los límites de la ventana."""
+    new_y = paddle.ycor() - PADDLE_MOVE_DISTANCE
+    if new_y < BOTTOM_LIMIT:
+        new_y = BOTTOM_LIMIT
+    paddle.sety(new_y)
