@@ -2,12 +2,15 @@
 
 De momento:
  - Creamos la ventana
- - Creamos las palas 
+ - Creamos las palas
  - Controles de teclado.
  - Creamos el bucle principal.
-Más adelante añadiremos:
-- Pelota con movimiento.
-- Sistema de puntuación.
+ - Pelota con movimiento.
+ - Sistema de puntuación.
+TODO: Más adelante añadiremos:
+- Vs AI
+- Menú inicial
+- Sonidos 
 """
 
 from tkinter import TclError
@@ -41,7 +44,6 @@ BALL_TOP_LIMIT = (WINDOW_HEIGHT / 2) - (BALL_SIZE / 2)
 BALL_BOTTOM_LIMIT = -BALL_TOP_LIMIT
 
 
-
 # Creamos la ventana del juego
 def setup_screen():
     """Configura la ventana principal del juego y la devuelve."""
@@ -65,9 +67,13 @@ def run_game() -> None:
     Añadido:
     - Creación y movimiento de palas.
     - Manejo de entradas del teclado.
-    Más adelante iremos añadiendo:
     - Creación y movimiento de la pelota.
     - Actualización de posiciones y detección de colisiones.
+    - Sistema de puntuación.
+    TODO: Más adelante iremos añadiendo:
+    - Menú inicial
+    - IA para jugar contra la máquina
+    - Sonidos
     """
 
     # Inicializamos la pantalla
@@ -82,15 +88,36 @@ def run_game() -> None:
     # Inicializamos la pelota
     ball = create_ball()
 
-    #Velocidades iniciales de la pelota
+    ## Velocidades iniciales de la pelota
     ball_dx = BALL_SPEED_X
     ball_dy = BALL_SPEED_Y
 
-    # -------- Eventos de teclado --------
-    # Para poder detectar teclas
+    # PUNTUACIÓN
+    score_left = 0
+    score_right = 0
+
+    score_pen = turtle.Turtle()
+    score_pen.speed(0)
+    score_pen.color("white")
+    score_pen.penup()
+    score_pen.hideturtle()
+    score_pen.goto(0, (WINDOW_HEIGHT / 2) - 40)  # parte superior de la pantalla
+
+    def draw_score() -> None:
+        """Limpia y vuelve a dibujar el marcador."""
+        score_pen.clear()
+        score_space = "\t" * 12  # espacio entre las puntuaciones
+        score_text = f"Jugador 1: {score_left} {score_space} Jugador 2: {score_right}"
+        score_pen.write(score_text, align="center", font=("Courier", 16, "normal"))
+
+    # Dibujamos el marcador inicial
+    draw_score()
+
+    # Eventos de teclado
+    ## Para poder detectar teclas
     screen.listen()
 
-    # Creamos funciones "wrapper" sin argumentos
+    ## Creamos funciones "wrapper" sin argumentos
     # porque onkeypress espera funciones sin parámetros.
     def left_paddle_up() -> None:
         move_paddle_up(left_paddle)
@@ -104,12 +131,12 @@ def run_game() -> None:
     def right_paddle_down() -> None:
         move_paddle_down(right_paddle)
 
-    # Asignamos teclas:
-    # - W / S para la pala izquierda
+    ## Asignamos teclas:
+    ## - W / S para la pala izquierda
     screen.onkeypress(left_paddle_up, "w")
     screen.onkeypress(left_paddle_down, "s")
 
-    # - Flechas ↑ / ↓ para la pala derecha
+    ## - Flechas ↑ / ↓ para la pala derecha
     screen.onkeypress(right_paddle_up, "Up")
     screen.onkeypress(right_paddle_down, "Down")
 
@@ -137,30 +164,49 @@ def run_game() -> None:
                 ball_dy *= -1  # invertimos la dirección vertical
 
             # COLISIÓN PALA DERECHA
-            if 340 < ball.xcor() < 360 and abs(ball.ycor() - right_paddle.ycor()) < PADDLE_HEIGHT / 2:
+            if (
+                340 < ball.xcor() < 360
+                and abs(ball.ycor() - right_paddle.ycor()) < PADDLE_HEIGHT / 2
+            ):
                 # Colocamos la pelota justo al borde de la pala y cambiamos dirección en X
                 ball.setx(340)
                 ball_dx *= -1
 
             # COLISIÓN PALA IZQUIERDA
-            if -360 < ball.xcor() < -340 and abs(ball.ycor() - left_paddle.ycor()) < PADDLE_HEIGHT / 2:
+            if (
+                -360 < ball.xcor() < -340
+                and abs(ball.ycor() - left_paddle.ycor()) < PADDLE_HEIGHT / 2
+            ):
                 ball.setx(-340)
                 ball_dx *= -1
 
-            # TODO: aquí actualizaremos la lógica del juego:
-            # - actualizar puntuación
-            # - reset de la pelota
-            # - etc.
+            # GESTIÓN DE PUNTUACIÓN 
+            ## Si la pelota se va muy a la derecha: punto para el jugador izquierdo
+            if ball.xcor() > (WINDOW_WIDTH / 2):
+                # Punto para jugador 1
+                score_left += 1
+                draw_score()
 
-            # Para no consumir 100% CPU, podemos hacer una pequeña pausa
-            # (opcional, turtle a veces ya limita el frame rate).
-            # turtle.time.sleep(0.01)  # si quisieras limitar aún más
+                # Reset de la pelota al centro, dirección hacia la izquierda
+                ball.goto(0, 0)
+                ball_dx = -abs(ball_dx)
+                ball_dy = BALL_SPEED_Y  # restablecemos velocidad vertical base
 
-            # Esperamos a que el usuario cierre la ventana (por si salimos del bucle)
-            # screen.mainloop()
+            ## Si la pelota se va muy a la izquierda: punto para el jugador derecho
+            if ball.xcor() < -(WINDOW_WIDTH / 2):
+                # Punto para jugador 2
+                score_right += 1
+                draw_score()
+
+                # Reset de la pelota al centro, dirección hacia la derecha
+                ball.goto(0, 0)
+                ball_dx = abs(ball_dx)
+                ball_dy = BALL_SPEED_Y
+
+            # Esperamos a que el usuario cierre la ventana
         except (turtle.Terminator, turtle.TurtleGraphicsError, TclError):
             # La ventana se ha cerrado, salimos del bucle
-            running = False    
+            running = False
             break
         except Exception as e:
             print(f"Error inesperado en el bucle del juego: {e}")
@@ -213,5 +259,3 @@ def create_ball() -> turtle.Turtle:
     ball.penup()
     ball.goto(0, 0)
     return ball
-
-
