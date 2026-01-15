@@ -136,8 +136,18 @@ def run_game() -> None:
                 ball.sety(BALL_BOTTOM_LIMIT)
                 ball_dy *= -1  # invertimos la dirección vertical
 
+            # COLISIÓN PALA DERECHA
+            if 340 < ball.xcor() < 360 and abs(ball.ycor() - right_paddle.ycor()) < PADDLE_HEIGHT / 2:
+                # Colocamos la pelota justo al borde de la pala y cambiamos dirección en X
+                ball.setx(340)
+                ball_dx *= -1
+
+            # COLISIÓN PALA IZQUIERDA
+            if -360 < ball.xcor() < -340 and abs(ball.ycor() - left_paddle.ycor()) < PADDLE_HEIGHT / 2:
+                ball.setx(-340)
+                ball_dx *= -1
+
             # TODO: aquí actualizaremos la lógica del juego:
-            # - detectar colisiones
             # - actualizar puntuación
             # - reset de la pelota
             # - etc.
