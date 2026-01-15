@@ -113,6 +113,30 @@ def run_game() -> None:
     # Dibujamos el marcador inicial
     draw_score()
 
+    # MENÚ
+    ## Estados posibles: "stopped", "running", "paused"
+    game_state = "stopped"
+
+    menu_pen = turtle.Turtle()
+    menu_pen.speed(0)
+    menu_pen.color("white")
+    menu_pen.penup()
+    menu_pen.hideturtle()
+    menu_pen.goto(0, 0)
+
+    def draw_menu() -> None:
+        """Muestra el estado actual y las instrucciones de control."""
+        menu_pen.clear()
+        if game_state == "stopped":
+            text = "Estado: DETENIDO\nSPACE: empezar | P: pausar | R: reiniciar"
+        elif game_state == "running":
+            text = "Estado: JUGANDO\nP: pausar | R: reiniciar"
+        else:  # paused
+            text = "Estado: PAUSADO\nSPACE: reanudar | R: reiniciar"
+        menu_pen.write(text, align="center", font=("Courier", 14, "normal"))
+
+    draw_menu()
+
     # Eventos de teclado
     ## Para poder detectar teclas
     screen.listen()
@@ -140,6 +164,44 @@ def run_game() -> None:
     screen.onkeypress(right_paddle_up, "Up")
     screen.onkeypress(right_paddle_down, "Down")
 
+    # Controles del menú (start/pause/reboot)
+    def start_game() -> None:
+        nonlocal game_state
+        if game_state in ("stopped", "paused"):
+            game_state = "running"
+            draw_menu()
+
+    def pause_game() -> None:
+        nonlocal game_state
+        if game_state == "running":
+            game_state = "paused"
+            draw_menu()
+
+    def reboot_game() -> None:
+        nonlocal game_state, score_left, score_right, ball_dx, ball_dy
+        # Reiniciar puntuación
+        score_left = 0
+        score_right = 0
+        draw_score()
+
+        # Reiniciar posiciones
+        left_paddle.goto(-350, 0)
+        right_paddle.goto(350, 0)
+        ball.goto(0, 0)
+
+        # Velocidades base
+        ball_dx = BALL_SPEED_X
+        ball_dy = BALL_SPEED_Y
+
+        # Volvemos a estado detenido
+        game_state = "stopped"
+        draw_menu()
+
+    # Asignamos teclas del menú
+    screen.onkeypress(start_game, "space")
+    screen.onkeypress(pause_game, "p")
+    screen.onkeypress(reboot_game, "r")
+
     # Bucle principal del juego
     running = True
 
@@ -148,60 +210,62 @@ def run_game() -> None:
             # Actualizamos la pantalla manualmente
             screen.update()
 
-            # LÓGICA DE LA PELOTA
-            ## Mover la pelota según su velocidad
-            ball.setx(ball.xcor() + ball_dx)
-            ball.sety(ball.ycor() + ball_dy)
+            # Solo actualizamos la lógica del juego si está "running"
+            if game_state == "running":
+                # LÓGICA DE LA PELOTA
+                ## Mover la pelota según su velocidad
+                ball.setx(ball.xcor() + ball_dx)
+                ball.sety(ball.ycor() + ball_dy)
 
-            ## Rebote en el borde superior
-            if ball.ycor() > BALL_TOP_LIMIT:
-                ball.sety(BALL_TOP_LIMIT)
-                ball_dy *= -1  # invertimos la dirección vertical
+                ## Rebote en el borde superior
+                if ball.ycor() > BALL_TOP_LIMIT:
+                    ball.sety(BALL_TOP_LIMIT)
+                    ball_dy *= -1  # invertimos la dirección vertical
 
-            ## Rebote en el borde inferior
-            if ball.ycor() < BALL_BOTTOM_LIMIT:
-                ball.sety(BALL_BOTTOM_LIMIT)
-                ball_dy *= -1  # invertimos la dirección vertical
+                ## Rebote en el borde inferior
+                if ball.ycor() < BALL_BOTTOM_LIMIT:
+                    ball.sety(BALL_BOTTOM_LIMIT)
+                    ball_dy *= -1  # invertimos la dirección vertical
 
-            # COLISIÓN PALA DERECHA
-            if (
-                340 < ball.xcor() < 360
-                and abs(ball.ycor() - right_paddle.ycor()) < PADDLE_HEIGHT / 2
-            ):
-                # Colocamos la pelota justo al borde de la pala y cambiamos dirección en X
-                ball.setx(340)
-                ball_dx *= -1
+                # COLISIÓN PALA DERECHA
+                if (
+                    340 < ball.xcor() < 360
+                    and abs(ball.ycor() - right_paddle.ycor()) < PADDLE_HEIGHT / 2
+                ):
+                    # Colocamos la pelota justo al borde de la pala y cambiamos dirección en X
+                    ball.setx(340)
+                    ball_dx *= -1
 
-            # COLISIÓN PALA IZQUIERDA
-            if (
-                -360 < ball.xcor() < -340
-                and abs(ball.ycor() - left_paddle.ycor()) < PADDLE_HEIGHT / 2
-            ):
-                ball.setx(-340)
-                ball_dx *= -1
+                # COLISIÓN PALA IZQUIERDA
+                if (
+                    -360 < ball.xcor() < -340
+                    and abs(ball.ycor() - left_paddle.ycor()) < PADDLE_HEIGHT / 2
+                ):
+                    ball.setx(-340)
+                    ball_dx *= -1
 
-            # GESTIÓN DE PUNTUACIÓN 
-            ## Si la pelota se va muy a la derecha: punto para el jugador izquierdo
-            if ball.xcor() > (WINDOW_WIDTH / 2):
-                # Punto para jugador 1
-                score_left += 1
-                draw_score()
+                # GESTIÓN DE PUNTUACIÓN 
+                ## Si la pelota se va muy a la derecha: punto para el jugador izquierdo
+                if ball.xcor() > (WINDOW_WIDTH / 2):
+                    # Punto para jugador 1
+                    score_left += 1
+                    draw_score()
 
-                # Reset de la pelota al centro, dirección hacia la izquierda
-                ball.goto(0, 0)
-                ball_dx = -abs(ball_dx)
-                ball_dy = BALL_SPEED_Y  # restablecemos velocidad vertical base
+                    # Reset de la pelota al centro, dirección hacia la izquierda
+                    ball.goto(0, 0)
+                    ball_dx = -abs(ball_dx)
+                    ball_dy = BALL_SPEED_Y  # restablecemos velocidad vertical base
 
-            ## Si la pelota se va muy a la izquierda: punto para el jugador derecho
-            if ball.xcor() < -(WINDOW_WIDTH / 2):
-                # Punto para jugador 2
-                score_right += 1
-                draw_score()
+                ## Si la pelota se va muy a la izquierda: punto para el jugador derecho
+                if ball.xcor() < -(WINDOW_WIDTH / 2):
+                    # Punto para jugador 2
+                    score_right += 1
+                    draw_score()
 
-                # Reset de la pelota al centro, dirección hacia la derecha
-                ball.goto(0, 0)
-                ball_dx = abs(ball_dx)
-                ball_dy = BALL_SPEED_Y
+                    # Reset de la pelota al centro, dirección hacia la derecha
+                    ball.goto(0, 0)
+                    ball_dx = abs(ball_dx)
+                    ball_dy = BALL_SPEED_Y
 
             # Esperamos a que el usuario cierre la ventana
         except (turtle.Terminator, turtle.TurtleGraphicsError, TclError):
